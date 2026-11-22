@@ -30,10 +30,12 @@ npm run dev            # http://localhost:5000
 | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` | BetterAuth config |
 | `CLIENT_URL`, `CORS_ORIGIN`, `FRONTEND_URL` | Allowed CORS / trusted origins (comma-separated) |
 | `JWT_SECRET` | Signs Bearer tokens issued by `POST /api/auth/token` |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe Checkout + webhook verification |
+| `BKASH_NUMBER` | Manual bKash receiving number shown on the pricing page |
 | `IMGBB_API_KEY` | Direct image upload |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google login |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `TUTOR_*`, `STUDENT_*` | Seed account credentials |
+
+Production on Render: set `BETTER_AUTH_URL=https://mentorlagbe.onrender.com` (origin only) and `CLIENT_URL` / `CORS_ORIGIN` to `https://mentorlagbe-drab.vercel.app`. `http://localhost:3000` remains allowed for local development. Cross-site cookies use `SameSite=None`, `Secure` and `partitioned` in production; local development keeps `SameSite=Lax`.
 
 ## API overview
 
@@ -53,10 +55,13 @@ npm run dev            # http://localhost:5000
 | GET | `/api/admin/stats` | admin | Platform statistics + revenue |
 | GET/PATCH | `/api/admin/tuitions...` | admin | All listings / approve or reject |
 | GET/PATCH | `/api/admin/users...` | admin | Users / role management |
-| GET | `/api/admin/payments` | admin | Stripe transaction records |
-| POST | `/api/payments/checkout` | token | Start Stripe Checkout ($15 tutor / $10 student) |
-| GET | `/api/payments/verify/:sessionId` | token | Fallback payment verification |
-| POST | `/api/payments/webhook` | Stripe signature | `checkout.session.completed` sync |
+| GET | `/api/admin/payments` | admin | bKash transaction records |
+| GET | `/api/payments/instructions` | token | bKash number and amount for the user's role |
+| POST | `/api/payments/checkout` | token | Submit bKash sender number + transaction ID |
+| GET | `/api/payments/my-payments` | token | Current user's payment history |
+| GET | `/api/payments/admin/pending` | admin | Pending bKash submissions |
+| PATCH | `/api/payments/admin/:paymentId/approve` | admin | Approve and activate Pro |
+| PATCH | `/api/payments/admin/:paymentId/reject` | admin | Reject submission |
 | POST | `/api/upload/image`, `/api/upload/banner` | token | ImgBB upload (profile / banner) |
 | GET/PATCH | `/api/user/me`, `/api/user/profile` | token | Profile read / update |
 | GET/POST/DELETE | `/api/user/saved...` | token | Student bookmarks |

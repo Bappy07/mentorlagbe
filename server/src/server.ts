@@ -30,7 +30,9 @@ function allowedOrigins() {
     process.env.CLIENT_URL,
     process.env.CORS_ORIGIN,
     process.env.FRONTEND_URL,
+    // Local dev + deployed Vercel origin. Extra origins can be added via env.
     "http://localhost:3000",
+    "https://mentorlagbe-drab.vercel.app",
   ].filter((value): value is string => Boolean(value));
 
   return Array.from(

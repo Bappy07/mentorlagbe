@@ -38,7 +38,30 @@ export function createPaymentRouter(db: Db, guards: AuthGuards) {
     next();
   };
 
-  // Get bKash payment instructions and submit payment details.
+  // Payment instructions for the submission form.
+  router.get("/instructions", verifyToken, (_req, res) => {
+    const bkashNumber = process.env.BKASH_NUMBER;
+
+    if (!bkashNumber) {
+      res.status(503).json({
+        success: false,
+        message: "bKash payment is not configured yet.",
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      bkashNumber,
+      currency: "BDT",
+      plans: {
+        student: { label: planLabel("student"), amount: PLAN_AMOUNTS.student },
+        tutor: { label: planLabel("tutor"), amount: PLAN_AMOUNTS.tutor },
+      },
+    });
+  });
+
+  // Submit bKash payment details for manual admin verification.
   router.post("/checkout", verifyToken, async (req, res) => {
     try {
       const user = req.authUser!;

@@ -50,9 +50,9 @@ export function createAuthGuards(auth: ReturnType<typeof createAuth>, db: Db) {
     try {
       const payload = jwt.verify(token, secret) as JwtPayload;
 
-      // Read the latest role/plan from the database so a role change or a
-      // Stripe upgrade is reflected immediately, without waiting for the
-      // token to expire.
+      // Read the latest role/plan from the database so a role change or an
+      // approved plan upgrade is reflected immediately, without waiting for
+      // the token to expire.
       const record = await users.findOne({
         $or: [{ id: payload.sub }, { email: payload.email }],
       });

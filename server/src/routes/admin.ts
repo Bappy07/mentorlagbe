@@ -85,7 +85,7 @@ export function createAdminRouter(
         payments.countDocuments(),
         payments
           .aggregate<{ _id: null; total: number }>([
-            { $match: { paymentStatus: "paid" } },
+            { $match: { paymentStatus: { $in: ["paid", "completed"] } } },
             { $group: { _id: null, total: { $sum: "$amount" } } },
           ])
           .toArray(),

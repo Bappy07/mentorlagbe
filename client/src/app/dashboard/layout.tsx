@@ -23,12 +23,14 @@ const links: Record<string, { label: string; href: string; icon: typeof LayoutDa
     { label: "Overview", href: "/dashboard/student", icon: LayoutDashboard },
     { label: "My Applications", href: "/dashboard/student/my-applications", icon: FileText },
     { label: "Saved Tuitions", href: "/dashboard/student/saved", icon: BookOpenCheck },
+    { label: "Payment History", href: "/payment/history", icon: CreditCard },
   ],
   tutor: [
     { label: "Overview", href: "/dashboard/tutor", icon: LayoutDashboard },
     { label: "Post a Tuition", href: "/dashboard/tutor/post-tuition", icon: FileText },
     { label: "My Tuitions", href: "/dashboard/tutor/my-tuitions", icon: BookOpenCheck },
     { label: "Applicants", href: "/dashboard/tutor/applicants", icon: Users },
+    { label: "Payment History", href: "/payment/history", icon: CreditCard },
   ],
   admin: [
     { label: "Overview", href: "/dashboard/admin", icon: LayoutDashboard },

@@ -3,12 +3,21 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import type { Db } from "mongodb";
 
+function isProduction() {
+  return (
+    process.env.NODE_ENV === "production" ||
+    Boolean(process.env.BETTER_AUTH_URL?.startsWith("https://"))
+  );
+}
+
 function getOrigins() {
   const configured = [
     process.env.CLIENT_URL,
     process.env.CORS_ORIGIN,
     process.env.FRONTEND_URL,
+    // Local dev + deployed Vercel origin. Extra origins can be added via env.
     "http://localhost:3000",
+    "https://mentorlagbe-drab.vercel.app",
   ].filter((value): value is string => Boolean(value));
 
   return Array.from(
@@ -26,6 +35,18 @@ export function createAuth(db: Db) {
 
     baseURL: process.env.BETTER_AUTH_URL,
     secret: process.env.BETTER_AUTH_SECRET,
+
+    // Vercel -> Render is cross-site. Production cookies need SameSite=None,
+    // Secure and partitioned storage; local development keeps the default Lax.
+    advanced: {
+      useSecureCookies: isProduction(),
+      defaultCookieAttributes: {
+        httpOnly: true,
+        secure: isProduction(),
+        sameSite: isProduction() ? "none" : "lax",
+        partitioned: isProduction(),
+      },
+    },
 
     trustedOrigins: getOrigins(),
 

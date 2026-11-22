@@ -3,16 +3,14 @@
 
 import { useRouter } from "next/navigation";
 import { Check, Sparkles } from "lucide-react";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
-import { apiFetch } from "@/lib/api";
 
 const plans = [
   {
     name: "Student Pro",
     description: "For students who want more learning opportunities.",
-    price: 10,
+    price: 1000,
     audience: "STUDENT",
     features: [
       "Access to tuition opportunities",
@@ -25,7 +23,7 @@ const plans = [
   {
     name: "Tutor Pro",
     description: "For tutors who want to grow their teaching career.",
-    price: 15,
+    price: 1500,
     audience: "TUTOR",
     features: [
       "Create and manage your profile",
@@ -40,32 +38,15 @@ const plans = [
 export default function PricingSection() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const [loadingPlan, setLoadingPlan] = useState("");
 
-  async function handleCheckout(plan: "student" | "tutor") {
+  function handleCheckout() {
     if (!session?.user) {
       toast.error("Please sign in before upgrading your plan.");
       router.push("/sign-in");
       return;
     }
 
-    setLoadingPlan(plan);
-    try {
-      const data = await apiFetch<{ url: string }>("/payments/checkout", {
-        method: "POST",
-        body: JSON.stringify({ plan }),
-      });
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        toast.error("Stripe did not return a checkout link.");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Checkout failed.");
-    } finally {
-      setLoadingPlan("");
-    }
+    router.push("/payment");
   }
 
   return (
@@ -136,7 +117,7 @@ export default function PricingSection() {
 
               <div className="mt-8 flex items-end gap-2">
                 <span className="text-5xl font-extrabold tracking-tight">
-                  ${plan.price}
+                  ৳{plan.price}
                 </span>
                 <span
                   className={`pb-2 text-sm ${
@@ -190,27 +171,22 @@ export default function PricingSection() {
 
               <button
                 type="button"
-                onClick={() => handleCheckout(plan.audience.toLowerCase() as "student" | "tutor")}
-                disabled={loadingPlan === plan.audience.toLowerCase()}
-                className={`mt-10 flex h-12 items-center justify-center rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 disabled:opacity-60 ${
+                onClick={handleCheckout}
+                className={`mt-10 flex h-12 items-center justify-center rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 ${
                   plan.audience === "TUTOR"
                     ? "bg-[#D6F36A] text-[#102B25] hover:bg-[#C7E65B]"
                     : "bg-[#102B25] text-white hover:bg-[#1B4235]"
                 }`}
               >
-                {loadingPlan === plan.audience.toLowerCase()
-                  ? "Opening Stripe..."
-                  : session?.user
-                    ? `Subscribe with Stripe`
-                    : "Get Started"}
+                {session?.user ? "Continue to bKash" : "Get Started"}
               </button>
             </article>
           ))}
         </div>
 
         <p className="mt-8 text-center text-xs leading-6 text-[#829187]">
-          All prices are monthly. Subscription payments will be handled
-          securely through Stripe.
+          All prices are monthly. Pro payments are submitted through bKash and
+          activated after admin verification.
         </p>
       </div>
     </section>

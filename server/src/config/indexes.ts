@@ -43,12 +43,48 @@ export async function createIndexes() {
   await applications.createIndex({ tutorId: 1, status: 1 });
   await applications.createIndex({ studentId: 1, status: 1 });
 
-  // Payments
-  await payments.createIndex(
-    { stripeSessionId: 1 },
-    { unique: true }
+  // Payments: remove the obsolete Stripe index if it still exists.
+  const paymentIndexes = await payments.indexes();
+  const stripeIndex = paymentIndexes.find(
+    (index) =>
+      index.name !== "_id_" &&
+      Object.keys(index.key).length === 1 &&
+      "stripeSessionId" in index.key
   );
 
+  if (stripeIndex?.name) {
+    try {
+      await payments.dropIndex(stripeIndex.name);
+    } catch (error) {
+      console.warn("Could not drop the old Stripe payment index.", error);
+    }
+  }
+
+  // bKash submissions are also checked for duplicates in the route.
+  const bkashIndex = paymentIndexes.find(
+    (index) =>
+      index.name !== "_id_" &&
+      Object.keys(index.key).length === 1 &&
+      "bkashTransactionId" in index.key
+  );
+
+  if (!bkashIndex) {
+    try {
+      await payments.createIndex(
+        { bkashTransactionId: 1 },
+        { name: "bkashTransactionId_1", unique: true, sparse: true }
+      );
+    } catch (error) {
+      // Existing duplicate IDs should not prevent the app from starting.
+      console.warn("Unique bKash index unavailable; using a non-unique index.", error);
+      await payments.createIndex(
+        { bkashTransactionId: 1 },
+        { name: "bkashTransactionId_1", sparse: true }
+      );
+    }
+  }
+
+  await payments.createIndex({ paymentStatus: 1, createdAt: -1 });
   await payments.createIndex({ userId: 1, createdAt: -1 });
 
   console.log("MongoDB indexes created successfully.");
