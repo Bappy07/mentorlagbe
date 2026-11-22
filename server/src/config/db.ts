@@ -26,3 +26,11 @@ export async function connectDB(): Promise<Db> {
 
   return database;
 }
+
+export async function closeDB() {
+  if (client) {
+    await client.close();
+    client = null;
+    database = null;
+  }
+}
