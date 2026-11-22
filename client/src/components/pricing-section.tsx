@@ -1,6 +1,12 @@
 
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Check, Sparkles } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { authClient } from "@/lib/auth-client";
+import { apiFetch } from "@/lib/api";
 
 const plans = [
   {
@@ -32,6 +38,36 @@ const plans = [
 ];
 
 export default function PricingSection() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const [loadingPlan, setLoadingPlan] = useState("");
+
+  async function handleCheckout(plan: "student" | "tutor") {
+    if (!session?.user) {
+      toast.error("Please sign in before upgrading your plan.");
+      router.push("/sign-in");
+      return;
+    }
+
+    setLoadingPlan(plan);
+    try {
+      const data = await apiFetch<{ url: string }>("/payments/checkout", {
+        method: "POST",
+        body: JSON.stringify({ plan }),
+      });
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error("Stripe did not return a checkout link.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Checkout failed.");
+    } finally {
+      setLoadingPlan("");
+    }
+  }
+
   return (
     <section
       id="pricing"
@@ -152,16 +188,22 @@ export default function PricingSection() {
                 ))}
               </ul>
 
-              <Link
-                href="/sign-up"
-                className={`mt-10 flex h-12 items-center justify-center rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 ${
+              <button
+                type="button"
+                onClick={() => handleCheckout(plan.audience.toLowerCase() as "student" | "tutor")}
+                disabled={loadingPlan === plan.audience.toLowerCase()}
+                className={`mt-10 flex h-12 items-center justify-center rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 disabled:opacity-60 ${
                   plan.audience === "TUTOR"
                     ? "bg-[#D6F36A] text-[#102B25] hover:bg-[#C7E65B]"
                     : "bg-[#102B25] text-white hover:bg-[#1B4235]"
                 }`}
               >
-                Get Started
-              </Link>
+                {loadingPlan === plan.audience.toLowerCase()
+                  ? "Opening Stripe..."
+                  : session?.user
+                    ? `Subscribe with Stripe`
+                    : "Get Started"}
+              </button>
             </article>
           ))}
         </div>
