@@ -18,7 +18,8 @@ import {
   Users,
 } from "lucide-react";
 
-import { tuitions } from "@/data/tuitions";
+import { tuitions as fallbackTuitions, type Tuition } from "@/data/tuitions";
+import { API_URL } from "@/lib/config";
 import TuitionCard from "@/components/tuition-card";
 import PricingSection from "@/components/pricing-section";
 import StatsSection from "@/components/stats-section";
@@ -53,7 +54,62 @@ const subjects = [
   { name: "All Subjects", icon: BookOpen, description: "Explore every learning opportunity" },
 ];
 
-export default function Home() {
+type FeaturedApiTuition = {
+  _id: string;
+  title: string;
+  classLevel: string;
+  subjects?: string[];
+  subject?: string;
+  location: string;
+  monthlyFee?: number;
+  salary?: number;
+  mode?: string;
+  tuitionType?: string;
+  daysPerWeek: number;
+  createdAt?: string;
+};
+
+/** Fetch the 6 newest approved tuitions; fall back to seed data if the API is offline. */
+async function getFeaturedTuitions(): Promise<Tuition[]> {
+  try {
+    const response = await fetch(
+      `${API_URL}/tuitions/approved?limit=6&page=1`,
+      { next: { revalidate: 60 } }
+    );
+    if (!response.ok) return fallbackTuitions.slice(0, 6);
+
+    const body = (await response.json()) as {
+      success?: boolean;
+      tuitions?: FeaturedApiTuition[];
+    };
+    if (!body.success || !body.tuitions?.length) {
+      return fallbackTuitions.slice(0, 6);
+    }
+
+    return body.tuitions.slice(0, 6).map((tuition) => ({
+      id: tuition._id,
+      title: tuition.title,
+      classLevel: tuition.classLevel,
+      subjects: tuition.subjects?.length
+        ? tuition.subjects
+        : [tuition.subject || "General"],
+      location: tuition.location,
+      salary: tuition.monthlyFee ?? tuition.salary ?? 0,
+      tuitionType:
+        (tuition.mode || tuition.tuitionType) === "online" ? "Online" : "Home",
+      daysPerWeek: tuition.daysPerWeek,
+      postedAt: tuition.createdAt
+        ? new Date(tuition.createdAt).toLocaleDateString()
+        : "Recently",
+    }));
+  } catch {
+    return fallbackTuitions.slice(0, 6);
+  }
+}
+
+export default async function Home() {
+  const featuredTuitions = await getFeaturedTuitions();
+
   return (
     <main className="flex-1 overflow-hidden bg-[#F5F7F3]">
       {/* Hero Section */}
@@ -313,7 +369,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {tuitions.slice(0, 6).map((tuition) => (
+            {featuredTuitions.map((tuition) => (
               <TuitionCard key={tuition.id} tuition={tuition} />
             ))}
           </div>
