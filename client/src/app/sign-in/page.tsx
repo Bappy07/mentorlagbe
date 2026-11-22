@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import {
   GraduationCap,
   Mail,
@@ -11,13 +12,71 @@ import {
   BookOpen,
   ShieldCheck,
 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { issueToken } from "@/lib/api";
+import { APP_URL } from "@/lib/config";
+import toast from "react-hot-toast";
 
 export default function SignInPage() {
-  const [message, setMessage] = useState("");
+  const router = useRouter();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("Sign in will be connected to Better Auth next.");
+
+    setMessage("");
+    setIsLoading(true);
+
+    try {
+      const { error, data } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: APP_URL,
+      });
+
+      if (error) {
+        setMessage(error.message || "Invalid email or password.");
+        toast.error(error.message || "Invalid email or password.");
+        return;
+      }
+
+      try {
+        await issueToken();
+      } catch {
+        // Cookie sessions still work as a fallback on protected routes.
+      }
+
+      const role = String((data?.user as { role?: string } | undefined)?.role || "student");
+      toast.success("Welcome back to MentorLagbe!");
+      router.push(role === "student" || role === "tutor" || role === "admin" ? `/dashboard/${role}` : "/dashboard");
+      router.refresh();
+    } catch {
+      setMessage("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setMessage("");
+    setIsGoogleLoading(true);
+
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: APP_URL,
+      });
+    } catch {
+      setMessage("Google sign-in failed. Please try again.");
+      toast.error("Google sign-in failed. Please try again.");
+      setIsGoogleLoading(false);
+    }
   }
 
   return (
@@ -98,6 +157,8 @@ export default function SignInPage() {
                     name="email"
                     type="email"
                     placeholder="you@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
                     required
                     autoComplete="email"
                     className="h-12 w-full rounded-xl border border-[#E1E8DF] bg-white pl-11 pr-4 text-sm text-[#102B25] outline-none transition placeholder:text-[#A0AAA2] focus:border-[#527C69] focus:ring-2 focus:ring-[#527C69]/10"
@@ -124,6 +185,8 @@ export default function SignInPage() {
                     name="password"
                     type="password"
                     placeholder="Enter your password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                     required
                     autoComplete="current-password"
                     className="h-12 w-full rounded-xl border border-[#E1E8DF] bg-white pl-11 pr-4 text-sm text-[#102B25] outline-none transition placeholder:text-[#A0AAA2] focus:border-[#527C69] focus:ring-2 focus:ring-[#527C69]/10"
@@ -132,19 +195,38 @@ export default function SignInPage() {
               </div>
 
               {message && (
-                <p className="rounded-xl bg-[#F0F5E9] p-3 text-sm text-[#527C69]">
+                <p className="rounded-xl bg-red-50 p-3 text-sm text-red-600">
                   {message}
                 </p>
               )}
 
               <button
                 type="submit"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#102B25] text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#1B4235]"
+                disabled={isLoading || isGoogleLoading}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#102B25] text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#1B4235] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Sign In
-                <ArrowRight size={18} />
+                {isLoading ? "Signing in..." : "Sign In"}
+                {!isLoading && <ArrowRight size={18} />}
               </button>
             </form>
+
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-[#E9EEE7]" />
+              <span className="text-xs font-medium text-[#849188]">
+                OR CONTINUE WITH
+              </span>
+              <div className="h-px flex-1 bg-[#E9EEE7]" />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading || isLoading}
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#E1E8DF] bg-white text-sm font-bold text-[#102B25] transition hover:bg-[#F5F7F3] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className="text-lg font-extrabold text-[#4285F4]">G</span>
+              {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
+            </button>
 
             <div className="mt-8 border-t border-[#E9EEE7] pt-6">
               <p className="text-center text-sm text-[#718078]">
