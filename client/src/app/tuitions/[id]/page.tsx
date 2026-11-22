@@ -1,5 +1,6 @@
 
 "use client";
+import { API_URL } from "@/lib/config";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -23,8 +24,6 @@ import { toast } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 type Tuition = {
   _id: string;

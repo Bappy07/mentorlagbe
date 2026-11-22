@@ -1,5 +1,6 @@
 
 "use client";
+import { API_URL } from "@/lib/config";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,8 +8,6 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 type TuitionForm = {
   title: string;
