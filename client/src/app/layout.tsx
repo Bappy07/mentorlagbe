@@ -4,6 +4,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/shared/navbar";
 import Footer from "@/components/shared/footer";
+import { Toaster } from "react-hot-toast";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -32,6 +33,7 @@ export default function RootLayout({
         <Navbar />
         {children}
         <Footer />
+        <Toaster position="top-right" />
       </body>
     </html>
   );
