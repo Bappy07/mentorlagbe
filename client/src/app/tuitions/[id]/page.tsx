@@ -42,6 +42,7 @@ type Tuition = {
   approvalStatus?: string;
   status?: string;
   isActive: boolean;
+  bannerImage?: string;
   createdAt?: string;
 };
 
@@ -215,6 +216,16 @@ export default function TuitionDetailsPage() {
         >
           <Bookmark size={16} /> Save this tuition
         </button>
+
+        {tuition.bannerImage && (
+          <div className="mt-6 overflow-hidden rounded-3xl border border-[#E5EBE2] bg-white">
+            <img
+              src={tuition.bannerImage}
+              alt={tuition.title}
+              className="h-56 w-full object-cover sm:h-72"
+            />
+          </div>
+        )}
 
         <div className="mt-8 grid gap-7 lg:grid-cols-[1fr_350px]">
           <section className="rounded-3xl border border-[#E5EBE2] bg-white p-7 sm:p-10">
