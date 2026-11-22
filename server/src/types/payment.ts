@@ -19,13 +19,17 @@ export interface Payment {
   plan: PaymentPlan;
 
   amount: number;
-  currency: "usd";
+  currency: "bdt";
 
-  stripeSessionId: string;
-  stripePaymentIntentId?: string;
-  stripeSubscriptionId?: string;
+  paymentMethod: "bkash";
+  bkashSenderNumber: string;
+  bkashTransactionId: string;
 
   status: PaymentStatus;
+
+  reviewedBy?: ObjectId;
+  reviewedAt?: Date;
+  rejectionReason?: string;
 
   createdAt: Date;
   updatedAt: Date;
