@@ -36,7 +36,11 @@ export default function Navbar() {
 
   const { data: session, isPending } = authClient.useSession();
 
-  const user = session?.user;
+  // Render the guest buttons immediately on first paint. The session request
+  // can take a moment on a fresh Vercel visit, and the old skeleton left the
+  // Sign In / Get Started buttons invisible until a reload. Waiting for mount
+  // keeps server and client markup identical (no hydration mismatch).
+  const user = isMounted && !isPending ? session?.user : undefined;
   const role = user?.role || "student";
 
   useEffect(() => {
@@ -80,8 +84,6 @@ export default function Navbar() {
     return name?.charAt(0).toUpperCase() || "U";
   }
 
-  const showLoading = !isMounted || isPending;
-
   return (
     <header className="sticky top-0 z-50 border-b border-[#E5EBE2] bg-[#F5F7F3]/95 backdrop-blur-md">
       <nav className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 lg:px-8">
@@ -121,9 +123,7 @@ export default function Navbar() {
 
         {/* Desktop Authentication */}
         <div className="hidden items-center gap-3 lg:flex">
-          {showLoading ? (
-            <div className="h-10 w-28 animate-pulse rounded-xl bg-[#E5EBE2]" />
-          ) : user ? (
+          {user ? (
             <div className="relative">
               <button
                 type="button"
@@ -255,9 +255,7 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {showLoading ? (
-              <div className="mt-3 h-12 animate-pulse rounded-xl bg-[#E5EBE2]" />
-            ) : user ? (
+            {user ? (
               <>
                 <div className="mt-3 flex items-center gap-3 border-t border-[#E5EBE2] px-4 pt-4">
                   {user.image ? (
